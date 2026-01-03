@@ -12,3 +12,6 @@ path = "src/main.rs"
 [dependencies]
 phone_agent.workspace = true
 tokio.workspace = true
+clap = { version = "4", features = ["derive", "env"] }
+anyhow.workspace = true
+which = "7"

@@ -101,6 +101,28 @@ impl ModelClient {
         Self { config, client }
     }
 
+    /// Test connection to the model API by sending a simple request
+    pub async fn test_connection(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let request = CreateChatCompletionRequestArgs::default()
+            .model(&self.config.model_name)
+            .max_tokens(5_u32)
+            .temperature(0.0_f32)
+            .messages(vec![ChatCompletionRequestUserMessageArgs::default()
+                .content("Hi")
+                .build()?
+                .into()])
+            .build()?;
+
+        let response = self.client.chat().create(request).await?;
+
+        // Check if we got a valid response
+        if response.choices.is_empty() {
+            return Err("Received empty response from API".into());
+        }
+
+        Ok(())
+    }
+
     /// Send a request to the model
     pub async fn request(
         &self,
