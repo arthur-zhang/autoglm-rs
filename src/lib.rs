@@ -1,14 +1,26 @@
-/// AutoGLM-RS: Rust port of phone_agent/adb module
+/// AutoGLM-RS: Rust port of phone_agent
 ///
-/// This library provides ADB (Android Debug Bridge) utilities for Android device automation,
-/// including connection management, device control, text input, and screenshot capture.
+/// This library provides Android phone automation capabilities:
+/// - ADB (Android Debug Bridge) utilities for device control
+/// - AI-powered agent for visual understanding and task execution
+/// - Action handling for model outputs
+/// - Multi-language support (Chinese/English)
 
+// Core ADB modules
 pub mod error;
 pub mod config;
 pub mod connection;
 pub mod device;
 pub mod input;
 pub mod screenshot;
+
+// New modules ported from Python
+pub mod i18n;
+pub mod prompts;
+pub mod device_factory;
+pub mod model;
+pub mod actions;
+pub mod agent;
 
 // Re-export commonly used types and functions
 pub use error::{AdbError, Result};
@@ -31,3 +43,11 @@ pub use input::{
 };
 
 pub use screenshot::{Screenshot, get_screenshot};
+
+// New module exports
+pub use i18n::{Language, get_message, get_messages};
+pub use prompts::get_system_prompt;
+pub use device_factory::{DeviceFactory, DeviceType, get_device_factory, set_device_type};
+pub use model::{ModelClient, ModelConfig, ModelResponse, MessageBuilder};
+pub use actions::{ActionHandler, ActionResult, parse_action, do_action, finish_action};
+pub use agent::{PhoneAgent, AgentConfig, StepResult};
