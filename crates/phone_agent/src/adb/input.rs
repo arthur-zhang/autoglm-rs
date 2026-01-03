@@ -1,4 +1,5 @@
-/// Input utilities for Android device text input
+//! Input utilities for Android device text input
+
 use crate::error::{AdbError, Result};
 use base64::{engine::general_purpose, Engine as _};
 use tokio::process::Command;
@@ -31,7 +32,7 @@ pub async fn type_text(text: &str, device_id: Option<&str>) -> Result<()> {
         .arg("msg")
         .arg(&encoded_text);
 
-    cmd.output().await.map_err(|e| AdbError::Io(e))?;
+    cmd.output().await.map_err(AdbError::Io)?;
 
     Ok(())
 }
@@ -50,7 +51,7 @@ pub async fn clear_text(device_id: Option<&str>) -> Result<()> {
         .arg("-a")
         .arg("ADB_CLEAR_TEXT");
 
-    cmd.output().await.map_err(|e| AdbError::Io(e))?;
+    cmd.output().await.map_err(AdbError::Io)?;
 
     Ok(())
 }
@@ -70,7 +71,7 @@ pub async fn detect_and_set_adb_keyboard(device_id: Option<&str>) -> Result<Stri
         .arg("secure")
         .arg("default_input_method");
 
-    let output = cmd.output().await.map_err(|e| AdbError::Io(e))?;
+    let output = cmd.output().await.map_err(AdbError::Io)?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -87,7 +88,7 @@ pub async fn detect_and_set_adb_keyboard(device_id: Option<&str>) -> Result<Stri
             .arg("set")
             .arg("com.android.adbkeyboard/.AdbIME");
 
-        cmd.output().await.map_err(|e| AdbError::Io(e))?;
+        cmd.output().await.map_err(AdbError::Io)?;
     }
 
     // Warm up the keyboard
@@ -106,7 +107,7 @@ pub async fn restore_keyboard(ime: &str, device_id: Option<&str>) -> Result<()> 
     }
     cmd.arg("shell").arg("ime").arg("set").arg(ime);
 
-    cmd.output().await.map_err(|e| AdbError::Io(e))?;
+    cmd.output().await.map_err(AdbError::Io)?;
 
     Ok(())
 }

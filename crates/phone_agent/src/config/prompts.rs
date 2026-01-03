@@ -1,7 +1,8 @@
-/// System prompts for the AI agent
+//! System prompts for the AI agent
+
 use chrono::{Datelike, Local};
 
-use crate::i18n::Language;
+use super::i18n::Language;
 
 /// Get weekday name in Chinese
 fn get_weekday_zh(weekday: chrono::Weekday) -> &'static str {

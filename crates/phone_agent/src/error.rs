@@ -1,4 +1,5 @@
-/// Error types for ADB operations
+//! Error types for phone_agent operations
+
 use thiserror::Error;
 
 #[derive(Debug, Error)]

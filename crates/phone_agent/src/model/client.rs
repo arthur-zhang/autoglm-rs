@@ -1,4 +1,5 @@
-/// Model client for AI inference using OpenAI-compatible API
+//! Model client for AI inference using OpenAI-compatible API
+
 use async_openai::{
     config::OpenAIConfig,
     types::{
@@ -15,7 +16,7 @@ use serde_json::json;
 use std::io::{self, Write};
 use std::time::Instant;
 
-use crate::i18n::{get_message, Language};
+use crate::config::{get_message, Language};
 
 /// Configuration for the AI model
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -305,7 +306,9 @@ impl MessageBuilder {
         }
 
         content_parts.push(ChatCompletionRequestUserMessageContentPart::Text(
-            async_openai::types::ChatCompletionRequestMessageContentPartText { text: text.to_string() },
+            async_openai::types::ChatCompletionRequestMessageContentPartText {
+                text: text.to_string(),
+            },
         ));
 
         ChatCompletionRequestUserMessageArgs::default()

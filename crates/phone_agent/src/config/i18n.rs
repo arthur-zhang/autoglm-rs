@@ -1,4 +1,5 @@
-/// Internationalization (i18n) module for Phone Agent UI messages
+//! Internationalization (i18n) module for Phone Agent UI messages
+
 use phf::phf_map;
 use serde::{Deserialize, Serialize};
 
