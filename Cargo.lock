@@ -120,24 +120,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
-name = "autoglm-rs"
+name = "autoglm-cli"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "async-openai",
- "base64",
- "chrono",
- "futures",
- "image",
- "lazy_static",
- "phf",
- "regex",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 1.0.69",
+ "phone_agent",
  "tokio",
- "uuid",
 ]
 
 [[package]]
@@ -1335,6 +1322,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67eabc2ef2a60eb7faa00097bd1ffdb5bd28e62bf39990626a582201b7a754e5"
 dependencies = [
  "siphasher",
+]
+
+[[package]]
+name = "phone_agent"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-openai",
+ "base64",
+ "chrono",
+ "futures",
+ "image",
+ "lazy_static",
+ "phf",
+ "regex",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

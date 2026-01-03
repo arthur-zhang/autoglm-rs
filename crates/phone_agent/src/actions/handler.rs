@@ -1,4 +1,5 @@
-/// Action handler for processing AI model outputs
+//! Action handler for processing AI model outputs
+
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::io::{self, Write};
@@ -186,10 +187,7 @@ impl ActionHandler {
             .and_then(|v| v.as_array())
             .ok_or_else(|| AdbError::CommandFailed("No element coordinates".to_string()))?;
 
-        let coords: Vec<i64> = element
-            .iter()
-            .filter_map(|v| v.as_i64())
-            .collect();
+        let coords: Vec<i64> = element.iter().filter_map(|v| v.as_i64()).collect();
 
         if coords.len() < 2 {
             return Err(AdbError::CommandFailed(
@@ -522,7 +520,7 @@ fn parse_do_action(response: &str) -> std::result::Result<HashMap<String, Value>
             ',' if !in_string && !in_array => {
                 // End of key=value pair
                 if !current_key.is_empty() {
-                    let value = parse_value(&current_value.trim());
+                    let value = parse_value(current_value.trim());
                     action.insert(current_key.trim().to_string(), value);
                 }
                 current_key.clear();
@@ -541,7 +539,7 @@ fn parse_do_action(response: &str) -> std::result::Result<HashMap<String, Value>
 
     // Handle last key=value pair
     if !current_key.is_empty() {
-        let value = parse_value(&current_value.trim());
+        let value = parse_value(current_value.trim());
         action.insert(current_key.trim().to_string(), value);
     }
 

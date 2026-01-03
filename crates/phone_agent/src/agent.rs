@@ -1,14 +1,16 @@
-/// Main PhoneAgent class for orchestrating phone automation
+//! Main PhoneAgent class for orchestrating phone automation
+
 use async_openai::types::ChatCompletionRequestMessage;
 use serde_json;
 use std::collections::HashMap;
 
-use crate::actions::{parse_action, ActionHandler, ConfirmationCallback, TakeoverCallback, finish_action};
+use crate::actions::{
+    finish_action, parse_action, ActionHandler, ConfirmationCallback, TakeoverCallback,
+};
+use crate::config::{get_messages, get_system_prompt, Language};
 use crate::device_factory::get_device_factory;
 use crate::error::Result;
-use crate::i18n::{get_messages, Language};
 use crate::model::{MessageBuilder, ModelClient, ModelConfig};
-use crate::prompts::get_system_prompt;
 
 /// Configuration for the PhoneAgent
 #[derive(Debug, Clone)]
@@ -215,11 +217,7 @@ impl PhoneAgent {
             ));
 
             let screen_info = MessageBuilder::build_screen_info(&current_app);
-            let text_content = format!(
-                "{}\n\n{}",
-                user_prompt.unwrap_or(""),
-                screen_info
-            );
+            let text_content = format!("{}\n\n{}", user_prompt.unwrap_or(""), screen_info);
 
             self.context.push(MessageBuilder::create_user_message(
                 &text_content,
@@ -311,7 +309,10 @@ impl PhoneAgent {
             || result.should_finish;
 
         if finished && self.agent_config.verbose {
-            let action_msg = action.get("message").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let action_msg = action
+                .get("message")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
             let display_msg = result
                 .message
                 .as_ref()
@@ -333,9 +334,12 @@ impl PhoneAgent {
             finished,
             action: Some(action.clone()),
             thinking: response.thinking,
-            message: result
-                .message
-                .or_else(|| action.get("message").and_then(|v| v.as_str()).map(|s| s.to_string())),
+            message: result.message.or_else(|| {
+                action
+                    .get("message")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+            }),
         })
     }
 

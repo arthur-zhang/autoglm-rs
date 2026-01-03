@@ -1,4 +1,5 @@
-/// Screenshot utilities for capturing Android device screen
+//! Screenshot utilities for capturing Android device screen
+
 use crate::error::{AdbError, Result};
 use base64::{engine::general_purpose, Engine as _};
 use image::{ImageBuffer, Rgb};
@@ -52,7 +53,7 @@ fn create_fallback_screenshot(is_sensitive: bool) -> Screenshot {
 
 /// Capture a screenshot from the connected Android device
 pub async fn get_screenshot(device_id: Option<&str>, timeout: u64) -> Result<Screenshot> {
-    let temp_file = NamedTempFile::new().map_err(|e| AdbError::Io(e))?;
+    let temp_file = NamedTempFile::new().map_err(AdbError::Io)?;
     let temp_path = temp_file.path().to_path_buf();
     let prefix = get_adb_prefix(device_id);
 
@@ -69,7 +70,7 @@ pub async fn get_screenshot(device_id: Option<&str>, timeout: u64) -> Result<Scr
     let output = tokio::time::timeout(Duration::from_secs(timeout), cmd.output())
         .await
         .map_err(|_| AdbError::Timeout(format!("Screenshot timeout after {}s", timeout)))?
-        .map_err(|e| AdbError::Io(e))?;
+        .map_err(AdbError::Io)?;
 
     // Check for screenshot failure (sensitive screen)
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -85,14 +86,12 @@ pub async fn get_screenshot(device_id: Option<&str>, timeout: u64) -> Result<Scr
     for arg in &prefix[1..] {
         cmd.arg(arg);
     }
-    cmd.arg("pull")
-        .arg("/sdcard/tmp.png")
-        .arg(&temp_path);
+    cmd.arg("pull").arg("/sdcard/tmp.png").arg(&temp_path);
 
     tokio::time::timeout(Duration::from_secs(5), cmd.output())
         .await
         .map_err(|_| AdbError::Timeout("Screenshot pull timeout after 5s".to_string()))?
-        .map_err(|e| AdbError::Io(e))?;
+        .map_err(AdbError::Io)?;
 
     // Check if file exists
     if !temp_path.exists() {
@@ -111,7 +110,7 @@ pub async fn get_screenshot(device_id: Option<&str>, timeout: u64) -> Result<Scr
     let mut buffer = Vec::new();
     let mut cursor = Cursor::new(&mut buffer);
     img.write_to(&mut cursor, image::ImageFormat::Png)
-        .map_err(|e| AdbError::Image(e))?;
+        .map_err(AdbError::Image)?;
 
     let base64_data = general_purpose::STANDARD.encode(&buffer);
 

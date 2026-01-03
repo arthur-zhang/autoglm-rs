@@ -1,13 +1,15 @@
-use autoglm_rs::*;
+//! AutoGLM CLI - Command-line interface for phone automation
+
+use phone_agent::*;
 
 #[tokio::main]
 async fn main() {
-    println!("AutoGLM-RS - Phone Agent Library");
-    println!("=================================\n");
+    println!("AutoGLM-RS - Phone Agent CLI");
+    println!("=============================\n");
 
     // List connected devices
     println!("Connected devices:");
-    match connection::list_devices().await {
+    match list_devices().await {
         Ok(devices) => {
             if devices.is_empty() {
                 println!("  No devices connected");

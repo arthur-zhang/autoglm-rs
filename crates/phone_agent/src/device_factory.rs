@@ -1,8 +1,7 @@
-/// Device factory for selecting device backend (currently ADB only)
-use crate::device;
+//! Device factory for selecting device backend (currently ADB only)
+
+use crate::adb;
 use crate::error::Result;
-use crate::input;
-use crate::screenshot::{get_screenshot, Screenshot};
 use std::sync::OnceLock;
 use tokio::sync::RwLock;
 
@@ -11,13 +10,13 @@ use tokio::sync::RwLock;
 pub enum DeviceType {
     #[default]
     Adb,
-    // HDC and iOS are not implemented in this version
+    // XCTest and HDC are not implemented in this version
 }
 
 /// Factory for device-specific implementations
 ///
 /// Currently only supports ADB (Android) devices.
-/// HDC (HarmonyOS) and iOS support are not included in this Rust port.
+/// XCTest (iOS) and HDC (HarmonyOS) support are not included in this Rust port.
 #[derive(Debug, Clone)]
 pub struct DeviceFactory {
     device_type: DeviceType,
@@ -39,16 +38,16 @@ impl DeviceFactory {
         &self,
         device_id: Option<&str>,
         timeout: u64,
-    ) -> Result<Screenshot> {
+    ) -> Result<adb::Screenshot> {
         match self.device_type {
-            DeviceType::Adb => get_screenshot(device_id, timeout).await,
+            DeviceType::Adb => adb::get_screenshot(device_id, timeout).await,
         }
     }
 
     /// Get current app name
     pub async fn get_current_app(&self, device_id: Option<&str>) -> Result<String> {
         match self.device_type {
-            DeviceType::Adb => device::get_current_app(device_id).await,
+            DeviceType::Adb => adb::get_current_app(device_id).await,
         }
     }
 
@@ -61,7 +60,7 @@ impl DeviceFactory {
         delay: Option<f64>,
     ) -> Result<()> {
         match self.device_type {
-            DeviceType::Adb => device::tap(x, y, device_id, delay).await,
+            DeviceType::Adb => adb::tap(x, y, device_id, delay).await,
         }
     }
 
@@ -74,7 +73,7 @@ impl DeviceFactory {
         delay: Option<f64>,
     ) -> Result<()> {
         match self.device_type {
-            DeviceType::Adb => device::double_tap(x, y, device_id, delay).await,
+            DeviceType::Adb => adb::double_tap(x, y, device_id, delay).await,
         }
     }
 
@@ -88,7 +87,7 @@ impl DeviceFactory {
         delay: Option<f64>,
     ) -> Result<()> {
         match self.device_type {
-            DeviceType::Adb => device::long_press(x, y, duration_ms, device_id, delay).await,
+            DeviceType::Adb => adb::long_press(x, y, duration_ms, device_id, delay).await,
         }
     }
 
@@ -105,7 +104,7 @@ impl DeviceFactory {
     ) -> Result<()> {
         match self.device_type {
             DeviceType::Adb => {
-                device::swipe(start_x, start_y, end_x, end_y, duration_ms, device_id, delay).await
+                adb::swipe(start_x, start_y, end_x, end_y, duration_ms, device_id, delay).await
             }
         }
     }
@@ -113,14 +112,14 @@ impl DeviceFactory {
     /// Press back button
     pub async fn back(&self, device_id: Option<&str>, delay: Option<f64>) -> Result<()> {
         match self.device_type {
-            DeviceType::Adb => device::back(device_id, delay).await,
+            DeviceType::Adb => adb::back(device_id, delay).await,
         }
     }
 
     /// Press home button
     pub async fn home(&self, device_id: Option<&str>, delay: Option<f64>) -> Result<()> {
         match self.device_type {
-            DeviceType::Adb => device::home(device_id, delay).await,
+            DeviceType::Adb => adb::home(device_id, delay).await,
         }
     }
 
@@ -132,42 +131,42 @@ impl DeviceFactory {
         delay: Option<f64>,
     ) -> Result<bool> {
         match self.device_type {
-            DeviceType::Adb => device::launch_app(app_name, device_id, delay).await,
+            DeviceType::Adb => adb::launch_app(app_name, device_id, delay).await,
         }
     }
 
     /// Type text
     pub async fn type_text(&self, text: &str, device_id: Option<&str>) -> Result<()> {
         match self.device_type {
-            DeviceType::Adb => input::type_text(text, device_id).await,
+            DeviceType::Adb => adb::type_text(text, device_id).await,
         }
     }
 
     /// Clear text
     pub async fn clear_text(&self, device_id: Option<&str>) -> Result<()> {
         match self.device_type {
-            DeviceType::Adb => input::clear_text(device_id).await,
+            DeviceType::Adb => adb::clear_text(device_id).await,
         }
     }
 
     /// Detect and set ADB keyboard
     pub async fn detect_and_set_adb_keyboard(&self, device_id: Option<&str>) -> Result<String> {
         match self.device_type {
-            DeviceType::Adb => input::detect_and_set_adb_keyboard(device_id).await,
+            DeviceType::Adb => adb::detect_and_set_adb_keyboard(device_id).await,
         }
     }
 
     /// Restore keyboard
     pub async fn restore_keyboard(&self, ime: &str, device_id: Option<&str>) -> Result<()> {
         match self.device_type {
-            DeviceType::Adb => input::restore_keyboard(ime, device_id).await,
+            DeviceType::Adb => adb::restore_keyboard(ime, device_id).await,
         }
     }
 
     /// List connected devices
-    pub async fn list_devices(&self) -> Result<Vec<crate::connection::DeviceInfo>> {
+    pub async fn list_devices(&self) -> Result<Vec<adb::DeviceInfo>> {
         match self.device_type {
-            DeviceType::Adb => crate::connection::list_devices().await,
+            DeviceType::Adb => adb::list_devices().await,
         }
     }
 }

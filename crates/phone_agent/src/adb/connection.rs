@@ -1,4 +1,5 @@
-/// ADB connection management for local and remote devices
+//! ADB connection management for local and remote devices
+
 use crate::config::TIMING_CONFIG;
 use crate::error::{AdbError, Result};
 use std::time::Duration;
@@ -58,7 +59,7 @@ impl AdbConnection {
         )
         .await
         .map_err(|_| AdbError::Timeout(format!("Connection timeout after {}s", timeout)))?
-        .map_err(|e| AdbError::Io(e))?;
+        .map_err(AdbError::Io)?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -86,7 +87,7 @@ impl AdbConnection {
         let output = tokio::time::timeout(Duration::from_secs(5), cmd.output())
             .await
             .map_err(|_| AdbError::Timeout("Disconnect timeout after 5s".to_string()))?
-            .map_err(|e| AdbError::Io(e))?;
+            .map_err(AdbError::Io)?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -111,7 +112,7 @@ impl AdbConnection {
         )
         .await
         .map_err(|_| AdbError::Timeout("List devices timeout after 5s".to_string()))?
-        .map_err(|e| AdbError::Io(e))?;
+        .map_err(AdbError::Io)?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let mut devices = Vec::new();
@@ -204,7 +205,7 @@ impl AdbConnection {
         let output = tokio::time::timeout(Duration::from_secs(10), cmd.output())
             .await
             .map_err(|_| AdbError::Timeout("Enable TCP/IP timeout after 10s".to_string()))?
-            .map_err(|e| AdbError::Io(e))?;
+            .map_err(AdbError::Io)?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -234,7 +235,7 @@ impl AdbConnection {
         let output = tokio::time::timeout(Duration::from_secs(5), cmd.output())
             .await
             .map_err(|_| AdbError::Timeout("Get device IP timeout after 5s".to_string()))?
-            .map_err(|e| AdbError::Io(e))?;
+            .map_err(AdbError::Io)?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
 
@@ -262,7 +263,7 @@ impl AdbConnection {
         let output = tokio::time::timeout(Duration::from_secs(5), cmd.output())
             .await
             .map_err(|_| AdbError::Timeout("Get device IP timeout after 5s".to_string()))?
-            .map_err(|e| AdbError::Io(e))?;
+            .map_err(AdbError::Io)?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
 
@@ -292,7 +293,7 @@ impl AdbConnection {
         )
         .await
         .map_err(|_| AdbError::Timeout("Kill server timeout after 5s".to_string()))?
-        .map_err(|e| AdbError::Io(e))?;
+        .map_err(AdbError::Io)?;
 
         tokio::time::sleep(Duration::from_secs_f64(
             TIMING_CONFIG.connection.server_restart_delay,
@@ -308,7 +309,7 @@ impl AdbConnection {
         )
         .await
         .map_err(|_| AdbError::Timeout("Start server timeout after 5s".to_string()))?
-        .map_err(|e| AdbError::Io(e))?;
+        .map_err(AdbError::Io)?;
 
         Ok("ADB server restarted".to_string())
     }
