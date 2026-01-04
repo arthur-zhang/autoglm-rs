@@ -3,6 +3,7 @@
 use async_openai::types::ChatCompletionRequestMessage;
 use serde_json;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use crate::actions::{
     finish_action, parse_action, ActionHandler, ConfirmationCallback, TakeoverCallback,
@@ -11,6 +12,7 @@ use crate::config::{get_messages, get_system_prompt, Language};
 use crate::device_factory::get_device_factory;
 use crate::error::Result;
 use crate::model::{MessageBuilder, ModelClient, ModelConfig};
+use crate::screenshot_saver::ScreenshotSaver;
 
 /// Configuration for the PhoneAgent
 #[derive(Debug, Clone)]
@@ -20,6 +22,8 @@ pub struct AgentConfig {
     pub lang: Language,
     pub system_prompt: Option<String>,
     pub verbose: bool,
+    /// Directory to save screenshots (if set, screenshots will be saved to disk)
+    pub screenshot_dir: Option<PathBuf>,
 }
 
 impl Default for AgentConfig {
@@ -30,6 +34,7 @@ impl Default for AgentConfig {
             lang: Language::Chinese,
             system_prompt: None,
             verbose: true,
+            screenshot_dir: None,
         }
     }
 }
@@ -70,6 +75,12 @@ impl AgentConfig {
         self
     }
 
+    /// Set screenshot directory
+    pub fn with_screenshot_dir(mut self, dir: impl Into<PathBuf>) -> Self {
+        self.screenshot_dir = Some(dir.into());
+        self
+    }
+
     /// Get the system prompt (custom or default based on language)
     pub fn get_system_prompt(&self) -> String {
         self.system_prompt
@@ -99,6 +110,7 @@ pub struct PhoneAgent {
     action_handler: ActionHandler,
     context: Vec<ChatCompletionRequestMessage>,
     step_count: usize,
+    screenshot_saver: Option<ScreenshotSaver>,
 }
 
 impl PhoneAgent {
@@ -109,12 +121,12 @@ impl PhoneAgent {
     /// * `agent_config` - Configuration for the agent behavior
     /// * `confirmation_callback` - Optional callback for sensitive action confirmation
     /// * `takeover_callback` - Optional callback for takeover requests
-    pub fn new(
+    pub async fn new(
         model_config: Option<ModelConfig>,
         agent_config: Option<AgentConfig>,
         confirmation_callback: Option<ConfirmationCallback>,
         takeover_callback: Option<TakeoverCallback>,
-    ) -> Self {
+    ) -> Result<Self> {
         let model_config = model_config.unwrap_or_default();
         let agent_config = agent_config.unwrap_or_default();
 
@@ -125,14 +137,22 @@ impl PhoneAgent {
             takeover_callback,
         );
 
-        Self {
+        // Initialize screenshot saver if directory is configured
+        let screenshot_saver = if let Some(ref dir) = agent_config.screenshot_dir {
+            Some(ScreenshotSaver::new(dir).await?)
+        } else {
+            None
+        };
+
+        Ok(Self {
             model_config,
             agent_config,
             model_client,
             action_handler,
             context: Vec::new(),
             step_count: 0,
-        }
+            screenshot_saver,
+        })
     }
 
     /// Run the agent to complete a task
@@ -187,9 +207,16 @@ impl PhoneAgent {
     }
 
     /// Reset the agent state for a new task
-    pub fn reset(&mut self) {
+    pub async fn reset(&mut self) {
         self.context.clear();
         self.step_count = 0;
+
+        // Create a new session directory for screenshots in interactive mode
+        if let Some(ref mut saver) = self.screenshot_saver {
+            if let Err(e) = saver.new_session().await {
+                eprintln!("Warning: Failed to create new screenshot session: {}", e);
+            }
+        }
     }
 
     /// Execute a single step of the agent loop
@@ -209,6 +236,13 @@ impl PhoneAgent {
             .get_current_app(self.agent_config.device_id.as_deref())
             .await?;
         drop(factory);
+
+        // Save screenshot to disk if configured
+        if let Some(ref mut saver) = self.screenshot_saver {
+            if let Err(e) = saver.save(&screenshot.base64_data).await {
+                eprintln!("Warning: Failed to save screenshot: {}", e);
+            }
+        }
 
         // Build messages
         if is_first {
