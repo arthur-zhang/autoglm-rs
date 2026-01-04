@@ -121,6 +121,10 @@ struct Cli {
     #[arg(long, env = "PHONE_AGENT_DEVICE_TYPE", default_value = "adb", value_parser = ["adb", "hdc", "ios"])]
     device_type: String,
 
+    /// Directory to save screenshots (creates timestamped subdirectory per session)
+    #[arg(long, env = "PHONE_AGENT_SCREENSHOT_DIR")]
+    screenshot_dir: Option<String>,
+
     /// Task to execute (interactive mode if not provided)
     task: Option<String>,
 }
@@ -776,6 +780,10 @@ fn print_header(args: &Cli, model_config: &ModelConfig, agent_config: &AgentConf
         println!("Device: {}", device_id);
     }
 
+    if let Some(ref screenshot_dir) = agent_config.screenshot_dir {
+        println!("Screenshot Dir: {}", screenshot_dir.display());
+    }
+
     println!("{}", "=".repeat(50));
 }
 
@@ -823,7 +831,7 @@ async fn run_interactive_mode(agent: &mut PhoneAgent) -> Result<()> {
             Ok(result) => println!("\nResult: {}\n", result),
             Err(e) => eprintln!("\nError: {}\n", e),
         }
-        agent.reset();
+        agent.reset().await;
     }
 
     Ok(())
@@ -874,22 +882,24 @@ async fn main() -> Result<()> {
     let model_config = ModelConfig::new(&args.base_url, &args.model).with_api_key(&args.apikey);
 
     let lang = parse_lang(&args.lang);
-    let agent_config = AgentConfig::new()
+    let mut agent_config = AgentConfig::new()
         .with_max_steps(args.max_steps)
         .with_lang(lang)
         .with_verbose(!args.quiet);
 
-    let agent_config = if let Some(device_id) = &args.device_id {
-        agent_config.with_device_id(device_id)
-    } else {
-        agent_config
-    };
+    if let Some(device_id) = &args.device_id {
+        agent_config = agent_config.with_device_id(device_id);
+    }
+
+    if let Some(screenshot_dir) = &args.screenshot_dir {
+        agent_config = agent_config.with_screenshot_dir(screenshot_dir);
+    }
 
     // Print header
     print_header(&args, &model_config, &agent_config);
 
     // Create agent
-    let mut agent = PhoneAgent::new(Some(model_config), Some(agent_config), None, None);
+    let mut agent = PhoneAgent::new(Some(model_config), Some(agent_config), None, None).await?;
 
     // Run with provided task or enter interactive mode
     if let Some(task) = &args.task {

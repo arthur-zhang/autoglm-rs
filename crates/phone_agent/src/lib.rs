@@ -25,7 +25,7 @@
 //!         Some(agent_config),
 //!         None,
 //!         None,
-//!     );
+//!     ).await.expect("Failed to create agent");
 //!
 //!     let result = agent.run("打开微信").await;
 //!     println!("Result: {:?}", result);
@@ -48,6 +48,7 @@ pub mod actions;
 pub mod agent;
 pub mod device_factory;
 pub mod model;
+pub mod screenshot_saver;
 
 // Re-export commonly used types and functions
 pub use error::{AdbError, Result};
@@ -80,3 +81,6 @@ pub use actions::{
 
 // Agent re-exports
 pub use agent::{AgentConfig, PhoneAgent, StepResult};
+
+// Screenshot saver re-exports
+pub use screenshot_saver::ScreenshotSaver;
